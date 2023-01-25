@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 
 from make_model import model_5cv, model_extv, remove_splits
 from file_manager import (directory_out_generation, file_to_arrays,
@@ -10,8 +10,8 @@ from file_manager import (directory_out_generation, file_to_arrays,
 
 
 
-# SVC_Poly
-model_type = 'SVC_Poly'
+# MLP_Adam/SGD
+model_type = 'MLP_adam_sgd'
 N_THREADS = 20
 
 # Getting the input files in the input directory.
@@ -24,20 +24,18 @@ results_dir = ml_dir + '/' + model_type
 os.makedirs(results_dir, exist_ok=True)
 
 # Setting the search space.
-# https://doi.org/10.1002/prot.25899
-# https://doi.org/10.1016/j.neucom.2020.07.061
+with open('layers.txt', 'r') as f:
+    layers = eval((f.read()))
+
 search_space = {
-'C': [0.0001, 0.001, 0.01, 0.1, 0.5,
-        1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
-        100, 150, 200, 250, 500, 750, 1000, 1250, 1500],
-'gamma': [0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1,
-            2, 2.5, 3, 3.5, 4.5, 5, 10, 15, 20, 25, 30, 35,
-            40, 45, 50, 100, 150, 200, 250, 300],
-'kernel': ['poly'], 
-'degree': [2, 3, 4, 5],
-'coef0': [0, 0.0001, 0.001, 0.005, 0.01, 0.05,
-            0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+'hidden_layer_sizes': layers,
+'solver': ['sgd', 'adam'],
+'activation': ['logistic', 'tanh', 'relu'],
+'learning_rate': ['constant'],
+'learning_rate_init': [0.001, 0.01, 0.1, 0.3],
+'batch_size': ['auto', 1, 5, 10, 15, 20, 25, 30, 35, 40],
+'max_iter': [300, 500, 1000],
+'early_stopping': [True]
 }
 
 for path, name in dict_pca_paths.items():
@@ -49,7 +47,7 @@ for path, name in dict_pca_paths.items():
     X_train, Y_train, X_test, Y_test = file_to_arrays(path)
 
     # Setting the classifier.
-    clf = SVC(random_state=2023)
+    clf = MLPClassifier(random_state=2023)
 
     # Runs the GridSearch.
     gs_5cv = model_5cv(clf, search_space, X_train, Y_train, N_THREADS)

@@ -12,7 +12,7 @@ from file_manager import (directory_out_generation, file_to_arrays,
 
 # RF
 model_type = 'RF'
-N_THREADS = 18
+N_THREADS = 20
 
 # Getting the input files in the input directory.
 pca_dir = "D:/Gabriel/9_ML_new/1_Fingerprint_transformation/2_Standardization_PCA/2_results"
