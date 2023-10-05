@@ -1,14 +1,14 @@
 import os
 import pandas as pd
-from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 
 from utils.grid_search import Grid_cheML
 from utils.file_manager import (directory_out_generation, file_to_arrays,
                                 get_LUNA_results, output_generation)
 
 
-# SVC_Linear
-model_type = 'SVC_Linear'
+# MLP_SGD
+model_type = 'MLP_SGD'
 N_THREADS = -1
 
 # Getting the input files in the input directory.
@@ -21,11 +21,22 @@ results_dir = ml_dir + '/' + model_type
 os.makedirs(results_dir, exist_ok=True)
 
 # Setting the search space.
+# Alpha = https://doi.org/10.1021/acs.molpharmaceut.9b00182.
+# Momentum = https://link.springer.com/article/10.1134/S2070205122020034.
+with open('layers.txt', 'r') as f:
+    layers = eval((f.read()))
+
 search_space = {
-    'C': [0.0001, 0.001, 0.01, 0.1, 0.5,
-          1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
-          100, 150, 200, 250, 500, 750, 1000, 1250, 1500],
-    'kernel': ['linear'],
+    'hidden_layer_sizes': layers,
+    'solver': ['sgd'],
+    'activation': ['identity', 'logistic', 'tanh', 'relu'],
+    'alpha': [0.00001, 0.0001, 0.001, 0.01],
+    'max_iter': [500],
+    'batch_size': ['auto'],
+    'learning_rate': ['constant'],
+    'learning_rate_init': [0.001, 0.01, 0.1, 0.3],
+    'momentum': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+    'early_stopping': [True]
 }
 
 for path, name in dict_pca_paths.items():
@@ -36,7 +47,7 @@ for path, name in dict_pca_paths.items():
 
     X_train, Y_train, X_test, Y_test = file_to_arrays(path)
 
-    clf = SVC(random_state=2023, probability=True)
+    clf = MLPClassifier(random_state=2023)
     grid = Grid_cheML(X_train, Y_train,
                       X_test, Y_test,
                       search_space, clf)
